@@ -1,0 +1,436 @@
+@import "tailwindcss";
+
+/* ───────────────────────────── Design tokens ───────────────────────────── */
+
+@theme {
+  /* Midnight navy → almost-black purple */
+  --color-void-950: #04030b;
+  --color-void-900: #070616;
+  --color-void-850: #0b0a1f;
+  --color-void-800: #100f2a;
+  --color-void-700: #17163a;
+  --color-void-600: #24225a;
+  --color-void-500: #34317a;
+
+  /* Accents — used sparingly */
+  --color-neon-violet: #9b6bff;
+  --color-neon-cyan: #2de2f5;
+  --color-neon-green: #4cf08a;
+  --color-neon-magenta: #f062e6;
+  --color-danger: #ff5c7a;
+
+  /* Text */
+  --color-ink: #f4f6ff;
+  --color-mist: #a3add3;
+  --color-mist-dim: #7f8ab0;
+
+  --font-display: var(--font-pixel), "Courier New", monospace;
+  --font-sans: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --animate-pulse-soft: pulse-soft 2.4s ease-in-out infinite;
+  --animate-blink: blink 1.1s steps(2, start) infinite;
+  --animate-chevron: chevron 1.8s ease-in-out infinite;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-rise: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-pixel-in: pixel-in 0.9s steps(6, end) both;
+
+  @keyframes pulse-soft {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
+  }
+  @keyframes blink {
+    to {
+      visibility: hidden;
+    }
+  }
+  @keyframes chevron {
+    0%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.45;
+    }
+    50% {
+      transform: translateY(6px);
+      opacity: 1;
+    }
+  }
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes pixel-in {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+}
+
+/* ───────────────────────────── Base ───────────────────────────── */
+
+@layer base {
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+    background-color: var(--color-void-950);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100svh;
+    background-color: var(--color-void-950);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
+  }
+
+  ::selection {
+    background: rgb(155 107 255 / 0.45);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-neon-cyan);
+    outline-offset: 3px;
+  }
+
+  section[id] {
+    scroll-margin-top: 5.5rem;
+  }
+
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.8) sepia(1) hue-rotate(160deg) saturate(3);
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ───────────────────────────── Utilities ───────────────────────────── */
+
+/* Notched 8-bit border drawn with four offset shadows; does not clip focus outlines. */
+@utility pixel-border {
+  --pixel-border: rgb(255 255 255 / 0.14);
+  box-shadow:
+    -2px 0 0 0 var(--pixel-border),
+    2px 0 0 0 var(--pixel-border),
+    0 -2px 0 0 var(--pixel-border),
+    0 2px 0 0 var(--pixel-border);
+}
+
+@utility text-quest-gradient {
+  background-image: linear-gradient(92deg, #c4a4ff 0%, #9b6bff 28%, #2de2f5 68%, #7af5b0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility hud-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-mist);
+}
+
+@utility pixel-grid-bg {
+  background-image:
+    linear-gradient(rgb(155 107 255 / 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(155 107 255 / 0.07) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+@utility scanlines {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgb(255 255 255 / 0.035) 0px,
+    rgb(255 255 255 / 0.035) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+@utility skeleton {
+  background-image: linear-gradient(
+    90deg,
+    rgb(36 34 90 / 0.35) 0%,
+    rgb(52 49 122 / 0.6) 50%,
+    rgb(36 34 90 / 0.35) 100%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+/* ───────────────────────────── Components ───────────────────────────── */
+
+@layer components {
+  .panel {
+    --pixel-border: rgb(255 255 255 / 0.1);
+    background-color: rgb(11 10 31 / 0.78);
+    box-shadow:
+      -2px 0 0 0 var(--pixel-border),
+      2px 0 0 0 var(--pixel-border),
+      0 -2px 0 0 var(--pixel-border),
+      0 2px 0 0 var(--pixel-border);
+  }
+
+  .glass {
+    background-color: rgb(7 6 22 / 0.58);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    backdrop-filter: blur(14px) saturate(140%);
+  }
+
+  .btn {
+    --pixel-border: rgb(255 255 255 / 0.22);
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: 2.75rem;
+    padding: 0.8rem 1.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    line-height: 1;
+    white-space: nowrap;
+    user-select: none;
+    box-shadow:
+      -2px 0 0 0 var(--pixel-border),
+      2px 0 0 0 var(--pixel-border),
+      0 -2px 0 0 var(--pixel-border),
+      0 2px 0 0 var(--pixel-border);
+    transition:
+      transform 160ms ease,
+      background-color 160ms ease,
+      color 160ms ease,
+      box-shadow 200ms ease,
+      filter 160ms ease;
+  }
+
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.55;
+    transform: none;
+  }
+
+  .btn-primary {
+    --pixel-border: #c4a4ff;
+    color: #fff;
+    background-image: linear-gradient(135deg, #8657ff 0%, #6a3cf0 55%, #4f2fd6 100%);
+  }
+
+  .btn-primary:not(:disabled):hover {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+    box-shadow:
+      -2px 0 0 0 var(--pixel-border),
+      2px 0 0 0 var(--pixel-border),
+      0 -2px 0 0 var(--pixel-border),
+      0 2px 0 0 var(--pixel-border),
+      0 0 28px 2px rgb(155 107 255 / 0.55);
+  }
+
+  .btn-secondary {
+    color: var(--color-ink);
+    background-color: rgb(7 6 22 / 0.55);
+  }
+
+  .btn-secondary:not(:disabled):hover {
+    --pixel-border: var(--color-neon-cyan);
+    color: var(--color-neon-cyan);
+    transform: translateY(-1px);
+  }
+
+  .btn-ghost {
+    --pixel-border: transparent;
+    color: var(--color-mist);
+    background-color: transparent;
+  }
+
+  .btn-ghost:not(:disabled):hover {
+    color: var(--color-ink);
+    background-color: rgb(255 255 255 / 0.05);
+  }
+
+  .btn-danger {
+    --pixel-border: #ff8fa3;
+    color: #fff;
+    background-color: #c8264a;
+  }
+
+  .btn-danger:not(:disabled):hover {
+    background-color: #de2f56;
+    transform: translateY(-1px);
+  }
+
+  .btn-sm {
+    min-height: 2.25rem;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+  }
+
+  .field-label {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-mist);
+  }
+
+  .field-input {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.7rem 0.9rem;
+    color: var(--color-ink);
+    background-color: rgb(4 3 11 / 0.7);
+    border: 1px solid rgb(255 255 255 / 0.14);
+    font-size: 0.95rem;
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease;
+  }
+
+  .field-input::placeholder {
+    color: var(--color-mist-dim);
+  }
+
+  .field-input:hover {
+    border-color: rgb(255 255 255 / 0.24);
+  }
+
+  .field-input:focus {
+    outline: none;
+    border-color: var(--color-neon-cyan);
+    box-shadow: 0 0 0 3px rgb(45 226 245 / 0.18);
+  }
+
+  .field-input[aria-invalid="true"] {
+    border-color: var(--color-danger);
+  }
+
+  .field-error {
+    margin-top: 0.4rem;
+    font-size: 0.8125rem;
+    color: #ff9fb2;
+  }
+
+  .field-hint {
+    margin-top: 0.4rem;
+    font-size: 0.8125rem;
+    color: var(--color-mist-dim);
+  }
+
+  .chip {
+    --pixel-border: rgb(255 255 255 / 0.12);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 2.25rem;
+    padding: 0.45rem 0.85rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--color-mist);
+    background-color: rgb(11 10 31 / 0.7);
+    box-shadow:
+      -2px 0 0 0 var(--pixel-border),
+      2px 0 0 0 var(--pixel-border),
+      0 -2px 0 0 var(--pixel-border),
+      0 2px 0 0 var(--pixel-border);
+    transition:
+      color 150ms ease,
+      background-color 150ms ease,
+      box-shadow 150ms ease;
+  }
+
+  .chip:hover {
+    color: var(--color-ink);
+    --pixel-border: rgb(255 255 255 / 0.3);
+  }
+
+  .chip[aria-pressed="true"],
+  .chip[aria-current="true"] {
+    color: #071018;
+    background-color: var(--color-neon-cyan);
+    --pixel-border: #9ff4fc;
+  }
+
+  /* Gallery card: a collectible "inventory item" with a restrained neon outline on hover/focus. */
+  .quest-card {
+    --pixel-border: rgb(255 255 255 / 0.09);
+    position: relative;
+    background-color: rgb(11 10 31 / 0.88);
+    box-shadow:
+      -2px 0 0 0 var(--pixel-border),
+      2px 0 0 0 var(--pixel-border),
+      0 -2px 0 0 var(--pixel-border),
+      0 2px 0 0 var(--pixel-border);
+    transition:
+      transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      box-shadow 220ms ease,
+      background-color 220ms ease;
+  }
+
+  a.quest-card:hover,
+  a.quest-card:focus-visible {
+    --pixel-border: rgb(45 226 245 / 0.65);
+    transform: translateY(-4px);
+    background-color: rgb(16 15 42 / 0.95);
+    box-shadow:
+      -2px 0 0 0 var(--pixel-border),
+      2px 0 0 0 var(--pixel-border),
+      0 -2px 0 0 var(--pixel-border),
+      0 2px 0 0 var(--pixel-border),
+      0 18px 40px -18px rgb(45 226 245 / 0.45);
+  }
+
+  a.quest-card:focus-visible {
+    outline-offset: 5px;
+  }
+}

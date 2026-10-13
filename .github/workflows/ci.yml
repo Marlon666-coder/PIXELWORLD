@@ -18,8 +18,8 @@ env:
   NODE_VERSION: "22"
 
 jobs:
-  bootstrap:
-    name: Bootstrap dependencies
+  verify:
+    name: Lint · Typecheck · Unit · Build
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -28,12 +28,13 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: npm
 
       - name: Use npm 11
-        run: npm install -g npm@11 && npm --version
+        run: npm install -g npm@11
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Upload npm debug logs
         if: failure()
@@ -41,22 +42,72 @@ jobs:
         with:
           name: npm-logs
           path: ~/.npm/_logs/
-          retention-days: 2
-
-      - name: Upload generated lockfile
-        uses: actions/upload-artifact@v7
-        with:
-          name: package-lock
-          path: package-lock.json
           retention-days: 3
 
-      - name: Snapshot node_modules for offline tooling
-        run: tar --exclude='node_modules/@next/swc-linux-x64-musl' -czf node_modules.tgz node_modules && ls -lh node_modules.tgz
+      - name: Lint
+        run: npm run lint
 
-      - name: Upload node_modules snapshot
-        uses: actions/upload-artifact@v7
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Production build
+        run: npm run build
+        env:
+          # Placeholder config: the build must succeed without a live project.
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder-project.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_placeholder
+
+  integration:
+    name: Supabase integration (local stack)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
         with:
-          name: node-modules
-          path: node_modules.tgz
-          retention-days: 2
-          compression-level: 0
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Use npm 11
+        run: npm install -g npm@11
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.120.0
+
+      - name: Start Supabase (applies migrations)
+        run: supabase start
+
+      - name: Verify migrated schema types match the committed types
+        run: |
+          supabase gen types typescript --local > lib/supabase/database.generated.ts
+          # Normalise header comments, then compare structurally.
+          node scripts/compare-db-types.mjs lib/supabase/database.types.ts lib/supabase/database.generated.ts
+
+      - name: Export local Supabase credentials
+        run: |
+          supabase status -o env | sed -E 's/^/SUPABASE_LOCAL_/' > "$RUNNER_TEMP/sb.env"
+          {
+            echo "SUPABASE_URL=$(grep '^SUPABASE_LOCAL_API_URL=' "$RUNNER_TEMP/sb.env" | cut -d= -f2- | tr -d '\"')"
+            echo "SUPABASE_PUBLISHABLE_KEY=$(grep '^SUPABASE_LOCAL_PUBLISHABLE_KEY=' "$RUNNER_TEMP/sb.env" | cut -d= -f2- | tr -d '\"')"
+            echo "SUPABASE_SECRET_KEY=$(grep '^SUPABASE_LOCAL_SECRET_KEY=' "$RUNNER_TEMP/sb.env" | cut -d= -f2- | tr -d '\"')"
+          } >> "$GITHUB_ENV"
+
+      - name: Integration tests (RLS, authorization, storage)
+        run: npm run test:integration
+
+      - name: Demo seeder smoke test (seed then clear)
+        run: |
+          node scripts/seed-demo.mjs
+          node scripts/seed-demo.mjs --clear
+
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop --no-backup || true
