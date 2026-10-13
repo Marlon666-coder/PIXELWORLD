@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+  NODE_VERSION: "22"
+
+jobs:
+  bootstrap:
+    name: Bootstrap dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Upload generated lockfile
+        uses: actions/upload-artifact@v7
+        with:
+          name: package-lock
+          path: package-lock.json
+          retention-days: 3
+
+      - name: Snapshot node_modules for offline tooling
+        run: tar --exclude='node_modules/@next/swc-linux-x64-musl' -czf node_modules.tgz node_modules && ls -lh node_modules.tgz
+
+      - name: Upload node_modules snapshot
+        uses: actions/upload-artifact@v7
+        with:
+          name: node-modules
+          path: node_modules.tgz
+          retention-days: 2
+          compression-level: 0
