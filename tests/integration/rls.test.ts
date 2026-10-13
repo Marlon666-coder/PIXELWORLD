@@ -37,12 +37,20 @@ describeMaybe("Supabase RLS, authorization & storage", () => {
     if (outsider) await deleteUser(config, outsider.id);
   });
 
-  async function seedCompetition(status: "draft" | "published", posterPath: string | null) {
+  // Published rows require a poster (DB constraint), so published seeds upload one first.
+  async function seedCompetition(status: "draft" | "published", posterPath?: string | null) {
     const service = createAdminClient(config);
+    let poster = posterPath ?? null;
+    if (status === "published" && poster === null) {
+      poster = `posters/${crypto.randomUUID()}.png`;
+      const upload = await service.storage.from(BUCKET).upload(poster, tinyPng(), { contentType: "image/png" });
+      if (upload.error) throw new Error(`seed poster upload failed: ${upload.error.message}`);
+      createdPosterPaths.push(poster);
+    }
     const title = uniqueTitle();
     const { data, error } = await service
       .from("competitions")
-      .insert({ title, organizer: "Test Org", category: "programming", status, poster_path: posterPath, created_by: admin.id })
+      .insert({ title, organizer: "Test Org", category: "programming", status, poster_path: poster, created_by: admin.id })
       .select("id")
       .single();
     if (error || !data) throw new Error(`seed failed: ${error?.message}`);
