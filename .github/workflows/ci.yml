@@ -29,8 +29,19 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Use npm 11
+        run: npm install -g npm@11 && npm --version
+
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+
+      - name: Upload npm debug logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-logs
+          path: ~/.npm/_logs/
+          retention-days: 2
 
       - name: Upload generated lockfile
         uses: actions/upload-artifact@v7
