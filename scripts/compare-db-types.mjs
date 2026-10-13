@@ -18,6 +18,11 @@ function normalize(source) {
     .replace(/\/\/.*$/gm, "") // line comments
     .replace(/\s+/g, " ") // collapse whitespace
     .replace(/,\s*}/g, " }") // tolerate trailing commas
+    .replace(/,\s*]/g, " ]")
+    .replace(/([=:|&(])\s*\|/g, "$1") // leading union bar is semantically insignificant
+    .replace(/\s*\|\s*/g, "|") // normalise spacing around union bars
+    .replace(/\s*([{};,:])\s*/g, "$1") // normalise spacing around punctuation
+    .replace(/;}/g, "}")
     .trim();
 }
 

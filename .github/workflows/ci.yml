@@ -91,6 +91,14 @@ jobs:
           # Normalise header comments, then compare structurally.
           node scripts/compare-db-types.mjs lib/supabase/database.types.ts lib/supabase/database.generated.ts
 
+      - name: Upload generated DB types on mismatch
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: database-types-generated
+          path: lib/supabase/database.generated.ts
+          retention-days: 3
+
       - name: Export local Supabase credentials
         run: |
           supabase status -o env | sed -E 's/^/SUPABASE_LOCAL_/' > "$RUNNER_TEMP/sb.env"
