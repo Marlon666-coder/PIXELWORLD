@@ -1,0 +1,127 @@
+# Supabase CLI configuration for LOCAL development and CI only.
+# Production settings live in the Supabase dashboard (see docs/SUPABASE.md).
+
+project_id = "pixel-quest"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[api.tls]
+enabled = false
+
+[db]
+port = 54322
+shadow_port = 54320
+health_timeout = "2m"
+major_version = 17
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[db.migrations]
+enabled = true
+schema_paths = []
+
+# No automatic seed: the gallery must start empty. Demo data is opt-in (npm run seed:demo).
+[db.seed]
+enabled = false
+sql_paths = []
+
+[realtime]
+enabled = false
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1"
+
+[local_smtp]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+# Global ceiling; the competition-posters bucket enforces its own 5 MiB limit.
+file_size_limit = "50MiB"
+
+[storage.s3_protocol]
+enabled = false
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = ["http://localhost:3000"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+# Keep signup enabled locally so admin email/password LOGIN works (see note below).
+# Harden this in the production dashboard, not here.
+enable_signup = true
+enable_anonymous_sign_ins = false
+enable_manual_linking = false
+# NOTE: In the Supabase CLI, email auth is disabled entirely when email signup is
+# off, which would also block admin LOGIN. For local dev and CI we therefore keep
+# signup enabled; the app never exposes a public sign-up UI, and in PRODUCTION you
+# disable new signups from the dashboard (Authentication → Providers → Email →
+# "Allow new users to sign up" = off). See docs/SUPABASE.md.
+minimum_password_length = 10
+password_requirements = "lower_upper_letters_digits"
+
+[auth.rate_limit]
+email_sent = 2
+sms_sent = 30
+anonymous_users = 30
+token_refresh = 150
+sign_in_sign_ups = 60
+token_verifications = 30
+web3 = 30
+
+[auth.email]
+# Must stay true locally or the CLI disables the email provider (blocking login).
+enable_signup = true
+double_confirm_changes = true
+# No SMTP in local dev: new users created via the admin API are auto-confirmable.
+enable_confirmations = false
+secure_password_change = false
+max_frequency = "1s"
+otp_length = 6
+otp_expiry = 3600
+
+[auth.sms]
+enable_signup = false
+enable_confirmations = false
+template = "Your code is {{ .Code }}"
+max_frequency = "5s"
+
+[auth.mfa]
+max_enrolled_factors = 10
+
+[auth.mfa.totp]
+enroll_enabled = false
+verify_enabled = false
+
+[auth.mfa.phone]
+enroll_enabled = false
+verify_enabled = false
+otp_length = 6
+template = "Your code is {{ .Code }}"
+max_frequency = "5s"
+
+[edge_runtime]
+enabled = false
+policy = "per_worker"
+inspector_port = 8083
+deno_version = 2
+
+[analytics]
+enabled = false
+port = 54327
+backend = "postgres"
