@@ -18,8 +18,9 @@ import { createClient } from "@supabase/supabase-js";
 const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
 const secret = process.env.SUPABASE_SECRET_KEY ?? process.env.SERVICE_ROLE_KEY;
 const BUCKET = "competition-posters";
+// Demo rows are identified by this organizer name (used by --clear), so poster
+// paths can keep the exact app format that the DB constraint requires.
 const DEMO_ORGANIZER = "PIXEL QUEST Demo";
-const DEMO_PREFIX = "posters/demo-";
 
 if (!url || !secret) {
   console.error("Missing SUPABASE_URL and/or SUPABASE_SECRET_KEY. See the comment at the top of this file.");
@@ -86,9 +87,6 @@ async function clear() {
     const paths = rows.map((r) => r.poster_path).filter(Boolean);
     if (paths.length) await supabase.storage.from(BUCKET).remove(paths);
   }
-  const { data: files } = await supabase.storage.from(BUCKET).list("posters", { limit: 1000 });
-  const demoFiles = (files ?? []).filter((f) => f.name.startsWith("demo-")).map((f) => `posters/${f.name}`);
-  if (demoFiles.length) await supabase.storage.from(BUCKET).remove(demoFiles);
   console.log(`Cleared ${rows?.length ?? 0} demo competition(s).`);
 }
 
@@ -96,7 +94,7 @@ async function seed() {
   await clear();
   let inserted = 0;
   for (const item of DEMO) {
-    const path = `${DEMO_PREFIX}${crypto.randomUUID()}.png`;
+    const path = `posters/${crypto.randomUUID()}.png`;
     const png = await solidPng(item.color);
     const upload = await supabase.storage.from(BUCKET).upload(path, png, { contentType: "image/png", upsert: false });
     if (upload.error) {
